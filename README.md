@@ -102,17 +102,28 @@ between the two equal-priority bottom-half tasks).
 1. **Why does `btn_task_sem`/`btn_task_notif` (priority 12) still outrank
    `blink_task` (priority 5) in this merged build, and what does that
    ordering guarantee?**
+   This guarantees a RADAR contact is always serviced before the beacon gets another chance to run — the beacon can be delayed by a contact, but a contact can never be delayed by the beacon.
+   With my measured worst case (2280 µs on the semaphore path) against a 1000 ms beacon period, a single contact costs the beacon about 0.23% of one period — negligible in isolation.
+   This is a guarantee about ordering, not magnitude; a sustained burst of contacts is a different story.
 
 2. **Since `blink_task` and both bottom-half tasks now share Core 1, could
    the beacon ever visibly stutter?**
-
+   Yes, under sustained load. The 200 µs debounce gate caps the theoretical worst case around 5,000 contacts/second, and since both bottom-half tasks outrank the beacon, a burst anywhere near that rate would let priority-12 work monopolize Core 1 and starve blink_task for the burst's duration.
+   Because vTaskDelayUntil tracks an absolute wake time instead of accumulating delay, the beacon wouldn't drift — it would skip its toggle windows during the burst, then resume on schedule the instant Core 1 frees up.
+   That's a stutter (missed toggles, then a snap back to cadence), not gradual drift.
+  
 3. **Is there a priority-inversion risk introduced by combining these two
    apps?**
+   No. Priority inversion requires a low-priority task holding a lock that a high-priority task is waiting on, while a medium-priority task preempts the lock holder.
+   Nothing here fits that shape — blink_task and the bottom-half tasks don't share a mutex, only plain volatile variables with no locking at all. The only thing they compete for is Core 1's CPU time, arbitrated purely by scheduler priority, not by resource ownership.
+   There's no lock, so there's nothing to invert.
 
 4. **The HTTP handler reads six separate volatile fields with no lock.
    Why is this "benign-racy" rather than a real bug, and where would that
    stop being true?**
-
+   Each field (led_on, toggle_count, presses_observed, radar_hit_count, and the two latency values) is a word-aligned volatile read, atomic on Xtensa, so no individual field is ever torn.
+   What isn't guaranteed is that all six reflect the same instant — handle_state() could read presses_observed just after a new contact bumped it, but read radar_hit_count just before the bottom-half task caught up, giving a snapshot that's inconsistent by one event.
+   That's harmless for a dashboard; the next poll 250 ms later self-corrects. It would stop being benign the moment this data drove a decision instead of a display — for example, if fault-detection logic combined led_on and toggle_count to decide something acted on in the real world, an inconsistent snapshot could       trigger a wrong call with real consequences. At that point I'd need either a mutex around the read or a designed snapshot copy taken under a short lock, so the whole set is atomic together, not just each field individually.
 
 ## 8. AI disclosure
 
@@ -123,3 +134,4 @@ between the two equal-priority bottom-half tasks).
 - Capstone integration: AI (Claude) used to merge App 1 and App 3 into a
   single `main.c`, extend the `/state` JSON and web dashboard to report
   ISR/bottom-half latency alongside beacon state
+- Organization: AI was used to organize the steps for the project

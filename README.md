@@ -55,7 +55,7 @@ HTTP server task (pri 5)                   writes: led_on, toggle_count
 | Task / ISR         | Core | Priority | Type / Period            | Shared state touched                                   | Measured max latency or WCET |
 |---------------------|------|----------|---------------------------|----------------------------------------------------------|-------------------------------|
 | `blink_task`        | 1    | 5        | Periodic, 1000 ms          | writes `led_on`, `toggle_count`                          | N/A |
-| `button_isr`        | 1    | HW ISR (preempts all tasks) | Aperiodic, on GPIO 18 NEGEDGE, 200 µs debounce gate | writes `isr_entry_time_us`, `presses_observed`; signals sem + notify | *(re-measure: GPIO18 fall → GPIO19 pulse)* |
+| `button_isr`        | 1    | HW ISR (preempts all tasks) | Aperiodic, on GPIO 18 NEGEDGE, 200 µs debounce gate | writes `isr_entry_time_us`, `presses_observed`; signals sem + notify | 21 µs |
 | `btn_task_sem`       | 1    | 12       | Aperiodic, wakes on binary semaphore | reads `isr_entry_time_us`; writes `radar_hit_count`, `latency_*_sem_us` | 2280 µs |
 | `btn_task_notif`     | 1    | 12       | Aperiodic, wakes on task notification | writes `latency_*_notif_us`                              | 31 µs |
 | HTTP server task     | 0    | 5        | Event-driven, per HTTP request | reads all shared state fields via `handle_state()`        | Not latency-critical to the RT path — isolated on Core 0 |

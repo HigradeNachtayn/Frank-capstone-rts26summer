@@ -354,23 +354,23 @@
           <td class="mono">button_isr</td><td class="mono">1</td><td class="mono">HW ISR</td>
           <td>Aperiodic, GPIO18 NEGEDGE, 200&nbsp;&micro;s debounce</td>
           <td class="mono">writes isr_entry_time_us, presses_observed</td>
-          <td class="mono">re-measure: GPIO18&rarr;GPIO19</td>
+          <td class="mono">21&nbsp;&micro;s</td>
         </tr>
         <tr>
           <td class="mono">btn_task_sem</td><td class="mono">1</td><td class="mono">12</td>
           <td>Aperiodic, wakes on binary semaphore</td>
           <td class="mono">writes radar_hit_count, latency_*_sem_us</td>
-          <td class="mono">re-measure (prior idle: 2320&nbsp;&micro;s)</td>
+          <td class="mono">2280&nbsp;&micro</td>
         </tr>
         <tr>
           <td class="mono">btn_task_notif</td><td class="mono">1</td><td class="mono">12</td>
           <td>Aperiodic, wakes on task notification</td>
           <td class="mono">writes latency_*_notif_us</td>
-          <td class="mono">re-measure (prior idle: 1922&nbsp;&micro;s)</td>
+          <td class="mono">31&nbsp;&micro;s</td>
         </tr>
         <tr>
           <td class="mono">HTTP server task</td><td class="mono">0</td><td class="mono">5</td>
-          <td>Event-driven, per request</td>
+          <td>Event-driven, per request</td>show 
           <td class="mono">reads all shared state</td>
           <td class="mono">Not on the RT path &mdash; isolated on Core 0</td>
         </tr>

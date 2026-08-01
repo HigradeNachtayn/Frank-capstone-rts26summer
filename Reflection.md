@@ -1,1 +1,14 @@
+Final Reflection — UAV-01 Ground Station Monitor
+What I'd do differently
 
+I wish I'd bought the hardware. Wokwi was great for getting something running quickly, and early on that was the right trade-off — I had enough to figure out just with the FreeRTOS APIs and the Wi-Fi/HTTP side of things without also fighting a breadboard. But a simulated button press isn't the same as a real one. I do this for a living with actual UAS hardware, and there's a real gap between "the simulator says this works" and "I watched it work on a scope." A cheap ESP32 board, a real pushbutton, maybe a logic analyzer, and I'd have actually seen switch bounce and real interrupt jitter instead of the tidier version Wokwi gives you. If I do anything like this again, the hardware's getting bought on day one, not left as a "maybe later."
+
+What was harder than expected
+
+The workload up front hit harder than I expected. Not because any one piece was hard on its own — dual-core pinning, vTaskDelayUntil, binary semaphores vs. task notifications, debouncing inside an ISR — it's more that all of it had to click at roughly the same time before App 1 or App 3 stopped feeling like scaffolding I was just filling in blanks on. By the time I actually got to merging the two apps for this capstone, that part was almost easy. The real work had already happened weeks earlier, just getting to the point where I could look at two unrelated main.c files and actually see how their tasks and priorities needed to talk to each other once combined.
+
+Most valuable thing learned
+
+The biggest thing I'm taking away is treating an interrupt handler like sacred ground. Everything in button_isr() either has to be safe to run in interrupt context or it doesn't belong in there at all — no printf, no blocking, no heap allocation, nothing that could hang the whole system waiting on something it's not allowed to wait on. That sounds obvious written down, but it's really easy to break without noticing — you just want to add "one more line" of logging in there and suddenly you've broken the rule. Once it actually sank in that the ISR's only job is timestamp, signal, get out — and everything else lives in the bottom-half tasks — the rest of the design mostly took care of itself.
+
+Pulling portYIELD_FROM_ISR() for the fault-injection part is what made this click instead of just being something I could recite. I predicted the response would get delayed, and it did (all be it by only a small amount), but watching the actual latency numbers move instead of just reasoning about it on paper is what made it stick. Keeping an interrupt short enough that it can never become the bottleneck, no matter what else is going on, is something I'll actually carry with me — it's directly relevant to the real-time systems I already work with, and it's probably the one idea from this whole class I'll still be thinking about a year from now.

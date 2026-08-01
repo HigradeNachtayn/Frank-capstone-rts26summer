@@ -22,12 +22,7 @@ out of this integration — the scope here is beacon + interrupt handling,
 not scheduler contention under load.
 
 ## 3. Wokwi link
-
-`<PASTE YOUR MERGED-PROJECT WOKWI URL HERE>`
-*(Your App 1 link — https://wokwi.com/projects/465546214035331073 — was the
-standalone beacon-only build. Publish a new project for the merged
-`main.c` and link it here; a reviewer should be able to open one URL and
-see the whole integrated system.)*
+https://wokwi.com/projects/471114279885448193
 
 ## 4. System architecture / concurrency diagram
 

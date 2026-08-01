@@ -1,1 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UAV-01 — Ground Station Monitor | Capstone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --panel-black: #0D1210;
+    --panel-black-2: #161D1A;
+    --manual-page: #F4EFDF;
+    --manual-page-2: #ECE5D0;
+    --amber: #FFC904;
+    --amber-dim: #7A5F03;
+    --green: #1B6A2E;
+    --green-bg: #E7F3EA;
+    --red: #B81829;
+    --red-bg: #FBE7E7;
+    --brown: #6B4F09;
+    --ink: #1A1A1A;
+    --hairline: #D8CFB0;
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --serif: 'IBM Plex Serif', Georgia, serif;
+  }
 
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--manual-page);
+    color: var(--ink);
+    font-family: var(--serif);
+    line-height: 1.6;
+  }
+
+  a { color: var(--brown); }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+
+  /* ---------- Hero: instrument panel ---------- */
+  .hero {
+    background: var(--panel-black);
+    color: var(--manual-page);
+    padding: 4.5rem 1.5rem 3.5rem;
+    position: relative;
+    overflow: hidden;
+    border-bottom: 6px solid var(--amber-dim);
+  }
+  .hero::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px,
+      transparent 1px, transparent 3px);
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 960px; margin: 0 auto; position: relative; }
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.4rem;
+  }
+  .beacon-dot {
+    width: 0.65em; height: 0.65em;
+    border-radius: 50%;
+    background: var(--amber);
+    box-shadow: 0 0 8px rgba(255,201,4,0.7);
+    animation: beacon 1.6s steps(1) infinite;
+  }
+  @keyframes beacon {
+    0%, 49% { background: var(--amber); box-shadow: 0 0 8px rgba(255,201,4,0.7); }
+    50%, 100% { background: var(--green); box-shadow: 0 0 8px rgba(27,106,46,0.7); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .beacon-dot { animation: none; }
+  }
+  .hero h1 {
+    font-family: var(--mono);
+    font-size: clamp(1.8rem, 4.2vw, 2.9rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 1rem;
+    line-height: 1.15;
+  }
+  .hero p.thesis {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    max-width: 62ch;
+    color: #DCD6C4;
+    margin: 0 0 2.4rem;
+  }
+  .gauge-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1px;
+    background: var(--amber-dim);
+    border: 1px solid var(--amber-dim);
+    max-width: 720px;
+  }
+  .gauge {
+    background: var(--panel-black-2);
+    padding: 1rem 1.1rem;
+  }
+  .gauge .num {
+    font-family: var(--mono);
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--amber);
+    line-height: 1;
+  }
+  .gauge .label {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9A9484;
+    margin-top: 0.4rem;
+  }
+  .hero-links {
+    margin-top: 2rem;
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+  .hero-links a {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    text-decoration: none;
+    color: var(--panel-black);
+    background: var(--amber);
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--amber);
+  }
+  .hero-links a.secondary {
+    background: transparent;
+    color: var(--amber);
+  }
+
+  /* ---------- Sections ---------- */
+  main { max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
+  section { padding: 3.2rem 0; border-bottom: 1px solid var(--hairline); }
+  section:last-of-type { border-bottom: none; }
+
+  .sec-label {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--brown);
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 1rem;
+  }
+  .sec-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--hairline);
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.6rem;
+    margin: 0 0 1rem;
+  }
+  section p { max-width: 68ch; }
+
+  /* Overview */
+  .theme-banner {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--brown);
+    border-left: 3px solid var(--amber);
+    padding-left: 0.9rem;
+    margin-bottom: 1.2rem;
+  }
+
+  /* Demo */
+  .video-frame {
+    aspect-ratio: 16/9;
+    width: 100%;
+    background: var(--panel-black);
+    border: 1px solid var(--hairline);
+  }
+  .video-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .demo-links { margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap; font-family: var(--mono); font-size: 0.85rem; }
+
+  /* Architecture */
+  .diagram-frame {
+    background: #fff;
+    border: 1px solid var(--hairline);
+    padding: 0.5rem;
+  }
+  .diagram-frame img { width: 100%; height: auto; display: block; }
+
+  /* Tables (task table + hazard table share manual-sheet look) */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+    margin-top: 1rem;
+  }
+  caption {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--brown);
+    margin-bottom: 0.5rem;
+  }
+  th, td {
+    border: 1px solid var(--hairline);
+    padding: 0.55rem 0.7rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--manual-page-2);
+    color: var(--brown);
+  }
+  td.mono, th.mono { font-family: var(--mono); font-size: 0.8rem; }
+
+  .sev {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+  }
+  .sev.high { background: var(--red-bg); color: var(--red); border: 1px solid var(--red); }
+  .sev.medium { background: #FFF3B0; color: var(--brown); border: 1px solid var(--amber-dim); }
+  .sev.low { background: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
+
+  .fine-print {
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    color: #7A7461;
+    margin-top: 1rem;
+  }
+
+  /* Engineering analysis teaser */
+  .qa {
+    border-left: 3px solid var(--hairline);
+    padding-left: 1rem;
+    margin: 1.2rem 0;
+  }
+  .qa .q { font-weight: 600; margin-bottom: 0.3rem; }
+
+  footer {
+    background: var(--panel-black);
+    color: #9A9484;
+    padding: 2.5rem 1.5rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+  }
+  footer .inner { max-width: 900px; margin: 0 auto; }
+  footer a { color: var(--amber); }
+  footer .links { display: flex; gap: 1.2rem; flex-wrap: wrap; margin-bottom: 1rem; }
+
+  @media (max-width: 600px) {
+    .hero { padding: 3rem 1.2rem 2.5rem; }
+    section { padding: 2.4rem 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow"><span class="beacon-dot" aria-hidden="true"></span> UAV-01 &middot; BEACON ONLINE &middot; AVIONICS CAPSTONE</div>
+    <h1>Ground Station Monitor</h1>
+    <p class="thesis">A dual-core ESP32 system pairing a 1&nbsp;Hz status beacon with an interrupt-driven RADAR-contact path — built by merging a Wi-Fi/web scaffold with an ISR/bottom-half scaffold into one dashboard.</p>
+
+    <div class="gauge-strip">
+      <div class="gauge"><div class="num">2</div><div class="label">Cores in use</div></div>
+      <div class="gauge"><div class="num">5</div><div class="label">Concurrent tasks + ISR</div></div>
+      <div class="gauge"><div class="num">4&nbsp;Hz</div><div class="label">Dashboard poll rate</div></div>
+      <div class="gauge"><div class="num">200&nbsp;&micro;s</div><div class="label">Debounce gate</div></div>
+    </div>
+
+    <div class="hero-links">
+      <a href="#demo">Watch the demo</a>
+      <a class="secondary" href="https://github.com/<YOURUSERNAME>/<YOURREPO>">View repo</a>
+      <a class="secondary" href="README.md">Full README</a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section id="overview">
+    <div class="sec-label">Sec 1 &mdash; Overview</div>
+    <h2>Project overview</h2>
+    <p class="theme-banner">Theme: Avionics &mdash; chosen because I work as an Unmanned Aircraft System engineer and build/race quadcopters outside of class, so a beacon/telemetry framing was already how I think about this kind of system.</p>
+    <p>This capstone integrates two earlier scaffolds into one running system. Core&nbsp;1 runs a periodic status beacon (<code>blink_task</code>) reporting the UAV's online/offline state, plus two bottom-half tasks woken by a hardware interrupt that simulates an incoming RADAR contact on a physical button. Core&nbsp;0 runs Wi-Fi and an HTTP server that exposes both the beacon state and live ISR-to-bottom-half latency as JSON, polled by the browser dashboard shown above.</p>
+    <p>The two bottom-half tasks exist deliberately as a pair: one wakes via a binary semaphore, the other via a direct task notification, so the dashboard reports comparative wake latency for both signaling primitives on every press &mdash; the evidence behind the task-table and engineering-analysis sections below.</p>
+  </section>
+
+  <section id="demo">
+    <div class="sec-label">Sec 2 &mdash; Demo</div>
+    <h2>Live demo</h2>
+    <div class="video-frame">
+      <iframe src="https://www.youtube.com/embed/REPLACE_WITH_VIDEO_ID" title="UAV-01 Ground Station Monitor demo" allowfullscreen loading="lazy"></iframe>
+    </div>
+    <div class="demo-links">
+      <a href="https://wokwi.com/projects/REPLACE_WITH_PROJECT_ID">Open Wokwi project &rarr;</a>
+      <a href="https://youtu.be/REPLACE_WITH_VIDEO_ID">Open on YouTube &rarr;</a>
+    </div>
+    <p class="fine-print">// Replace both placeholder IDs above once the merged-build Wokwi project and the recorded demo video are published.</p>
+  </section>
+
+  <section id="architecture">
+    <div class="sec-label">Sec 3 &mdash; Architecture</div>
+    <h2>System architecture</h2>
+    <div class="diagram-frame">
+      <img src="system-architecture.svg" alt="Diagram showing Core 0 running Wi-Fi and the HTTP server, and Core 1 running the blink task, button ISR, and two bottom-half tasks, with shared volatile state connecting them.">
+    </div>
+    <p>Core 0 owns Wi-Fi and HTTP — nothing time-critical lives there. Core 1 holds three tasks that matter for real-time behavior: the beacon at priority&nbsp;5, and both bottom-half tasks at priority&nbsp;12, so a RADAR contact always preempts the beacon, never the reverse.</p>
+  </section>
+
+  <section id="tasks">
+    <div class="sec-label">Sec 4 &mdash; Task Table &amp; WCET</div>
+    <h2>Task table + WCET evidence</h2>
+    <table>
+      <caption>Measured on the merged build &mdash; re-run and update cells marked &ldquo;re-measure&rdquo;</caption>
+      <thead>
+        <tr>
+          <th>Task / ISR</th><th class="mono">Core</th><th class="mono">Priority</th><th>Type / period</th><th>Shared state touched</th><th>Latency / WCET</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">blink_task</td><td class="mono">1</td><td class="mono">5</td>
+          <td>Periodic, 1000&nbsp;ms</td>
+          <td class="mono">writes led_on, toggle_count</td>
+          <td class="mono">N/A &mdash; report jitter if measured</td>
+        </tr>
+        <tr>
+          <td class="mono">button_isr</td><td class="mono">1</td><td class="mono">HW ISR</td>
+          <td>Aperiodic, GPIO18 NEGEDGE, 200&nbsp;&micro;s debounce</td>
+          <td class="mono">writes isr_entry_time_us, presses_observed</td>
+          <td class="mono">re-measure: GPIO18&rarr;GPIO19</td>
+        </tr>
+        <tr>
+          <td class="mono">btn_task_sem</td><td class="mono">1</td><td class="mono">12</td>
+          <td>Aperiodic, wakes on binary semaphore</td>
+          <td class="mono">writes radar_hit_count, latency_*_sem_us</td>
+          <td class="mono">re-measure (prior idle: 2320&nbsp;&micro;s)</td>
+        </tr>
+        <tr>
+          <td class="mono">btn_task_notif</td><td class="mono">1</td><td class="mono">12</td>
+          <td>Aperiodic, wakes on task notification</td>
+          <td class="mono">writes latency_*_notif_us</td>
+          <td class="mono">re-measure (prior idle: 1922&nbsp;&micro;s)</td>
+        </tr>
+        <tr>
+          <td class="mono">HTTP server task</td><td class="mono">0</td><td class="mono">5</td>
+          <td>Event-driven, per request</td>
+          <td class="mono">reads all shared state</td>
+          <td class="mono">Not on the RT path &mdash; isolated on Core 0</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="hazards">
+    <div class="sec-label">Sec 5 &mdash; Hazard Analysis</div>
+    <h2>Hazard analysis</h2>
+    <table>
+      <caption>Informal severity, mapped loosely to DO-178C failure-condition categories</caption>
+      <thead>
+        <tr><th>Hazard</th><th>Cause</th><th>Effect</th><th>Mitigation</th><th>Severity</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Beacon looks &ldquo;online&rdquo; after a hang</td>
+          <td>blink_task starved or crashed; last led_on value persists</td>
+          <td>Dashboard shows false confidence</td>
+          <td>Staleness timestamp not yet implemented &mdash; future work</td>
+          <td><span class="sev high">High</span></td>
+        </tr>
+        <tr>
+          <td>RADAR contact missed</td>
+          <td>Binary semaphore already given before it's taken</td>
+          <td>Contact under-counted, no error surfaced</td>
+          <td>Known binary-sem limit; queue/counting sem would close it</td>
+          <td><span class="sev medium">Medium</span></td>
+        </tr>
+        <tr>
+          <td>Torn read of latency stats</td>
+          <td>last/max latency fields written as separate ops</td>
+          <td>One poll could show inconsistent last vs. max</td>
+          <td>Benign for a dashboard; self-corrects next poll</td>
+          <td><span class="sev low">Low</span></td>
+        </tr>
+        <tr>
+          <td>Wi-Fi drop mid-session</td>
+          <td>Simulated AP / network instability</td>
+          <td>Dashboard goes dark; onboard tasks unaffected</td>
+          <td>Core separation isolates RT path from network stack</td>
+          <td><span class="sev medium">Medium</span></td>
+        </tr>
+        <tr>
+          <td>ISR starvation of lower-priority tasks</td>
+          <td>Rapid sustained button presses</td>
+          <td>HTTP/blink tasks delayed if not gated</td>
+          <td>200&nbsp;&micro;s debounce bounds worst-case interrupt rate</td>
+          <td><span class="sev low">Low</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="analysis">
+    <div class="sec-label">Sec 6 &mdash; Engineering Analysis</div>
+    <h2>Selected engineering analysis</h2>
+    <div class="qa">
+      <div class="q">Why does the bottom-half priority (12) still outrank the beacon (5) in this merged build?</div>
+      <p>So a RADAR contact always preempts the beacon toggle &mdash; a button press can delay when the LED flips, but the LED can never delay how fast a contact is serviced.</p>
+    </div>
+    <div class="qa">
+      <div class="q">Is there a priority-inversion risk from combining these two apps?</div>
+      <p>No &mdash; there's no shared mutex between the beacon and the bottom-half tasks, so classic inversion doesn't apply; the only shared resource is Core&nbsp;1's CPU time, arbitrated by scheduler priority, not a lock.</p>
+    </div>
+    <p><a href="README.md">Read the full engineering analysis, hazard mapping, and AI disclosure in the README &rarr;</a></p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="inner">
+    <div class="links">
+      <a href="https://github.com/<YOURUSERNAME>/<YOURREPO>">GitHub repo</a>
+      <a href="README.md">README.md</a>
+      <a href="https://wokwi.com/projects/REPLACE_WITH_PROJECT_ID">Wokwi project</a>
+      <a href="https://youtu.be/REPLACE_WITH_VIDEO_ID">Demo video</a>
+    </div>
+    <p>AI disclosure: development assistance and this site's copy/layout drafted with Claude; system behavior, measured values, and analysis conclusions verified by the author. Full disclosure in README.md &sec; 8.</p>
+  </div>
+</footer>
+
+</body>
+</html>

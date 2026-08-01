@@ -54,15 +54,16 @@ HTTP server task (pri 5)                   writes: led_on, toggle_count
 
 | Task / ISR         | Core | Priority | Type / Period            | Shared state touched                                   | Measured max latency or WCET |
 |---------------------|------|----------|---------------------------|----------------------------------------------------------|-------------------------------|
-| `blink_task`        | 1    | 5        | Periodic, 1000 ms          | writes `led_on`, `toggle_count`                          | N/A (deadline is the period; report jitter if measured) |
+| `blink_task`        | 1    | 5        | Periodic, 1000 ms          | writes `led_on`, `toggle_count`                          | N/A |
 | `button_isr`        | 1    | HW ISR (preempts all tasks) | Aperiodic, on GPIO 18 NEGEDGE, 200 µs debounce gate | writes `isr_entry_time_us`, `presses_observed`; signals sem + notify | *(re-measure: GPIO18 fall → GPIO19 pulse)* |
-| `btn_task_sem`       | 1    | 12       | Aperiodic, wakes on binary semaphore | reads `isr_entry_time_us`; writes `radar_hit_count`, `latency_*_sem_us` | *(re-measure without App 2 load; prior App 3 idle baseline: 2320 µs)* |
-| `btn_task_notif`     | 1    | 12       | Aperiodic, wakes on task notification | writes `latency_*_notif_us`                              | *(re-measure without App 2 load; prior App 3 idle baseline: 1922 µs)* |
+| `btn_task_sem`       | 1    | 12       | Aperiodic, wakes on binary semaphore | reads `isr_entry_time_us`; writes `radar_hit_count`, `latency_*_sem_us` | 2280 µs |
+| `btn_task_notif`     | 1    | 12       | Aperiodic, wakes on task notification | writes `latency_*_notif_us`                              | 31 µs |
 | HTTP server task     | 0    | 5        | Event-driven, per HTTP request | reads all shared state fields via `handle_state()`        | Not latency-critical to the RT path — isolated on Core 0 |
 
-**Fill in the "re-measure" cells** from your own logic-analyzer or serial-log
-run on the merged build — see App 3's "Capturing latency with Wokwi's logic
-analyzer" instructions, unchanged in this integration.
+**// The ~70× gap between the semaphore path (2280 µs) and 
+notification path (31 µs) is larger than expected — see README &sec;5 
+for a hypothesis on why (likely a round-robin scheduling tie-break 
+between the two equal-priority bottom-half tasks).
 
 ## 6. Hazard analysis
 
@@ -73,12 +74,6 @@ analyzer" instructions, unchanged in this integration.
 | Torn read of latency stats | Bottom-half tasks write two related fields (`latency_last_*`, `latency_max_*`) as separate writes, not atomically | HTTP snapshot could show a "last" value newer than "max" for one instant | Benign for a dashboard (self-corrects next poll); would need a mutex or copy-on-read if this fed a safety-rated system | Low |
 | Wi-Fi drop mid-mission | Simulated AP or real network instability | Dashboard goes dark; onboard tasks (beacon, ISR path) are unaffected since they don't depend on Wi-Fi | Core separation already isolates flight-critical-style tasks from the network stack — the actual design win to call out here | Medium (dashboard only, not "flight") |
 | ISR starvation of lower-priority tasks | Rapid, sustained button presses each re-entering the ISR | HTTP task and blink task could be delayed if presses came fast enough and debounce didn't gate them | 200 µs debounce gate bounds worst-case interrupt rate | Low |
-
-*(Optional industry-standard mapping: if you want to push this further,
-DO-178C's hazard/failure-condition categories — Catastrophic / Hazardous /
-Major / Minor / No Effect — map reasonably well onto the severity column
-above; ARP4761 is the standard that formalizes the hazard-analysis process
-itself if you want to cite something specific in your reflection.)*
 
 ## 7. Engineering analysis — carried over + extended
 

@@ -26,8 +26,9 @@ https://wokwi.com/projects/471114279885448193
 
 ## 4. System architecture / concurrency diagram
 
-See `system-architecture.svg` in this repo (generated alongside this
-README). Summary of the concurrency structure:
+See `system-architecture.svg` in this repo
+
+Summary of the concurrency structure:
 
 ```
 Core 0 (PRO_CPU)                         Core 1 (APP_CPU)
@@ -106,30 +107,17 @@ itself if you want to cite something specific in your reflection.)*
 1. **Why does `btn_task_sem`/`btn_task_notif` (priority 12) still outrank
    `blink_task` (priority 5) in this merged build, and what does that
    ordering guarantee?**
-   *(Your answer: this guarantees the RADAR-contact response always
-   preempts the periodic beacon toggle — a button press can delay when the
-   LED flips, but the LED can never delay how fast a contact is serviced.)*
+
 2. **Since `blink_task` and both bottom-half tasks now share Core 1, could
    the beacon ever visibly stutter?**
-   *(Your answer: only if a burst of button presses kept both priority-12
-   tasks runnable back-to-back long enough to push a `vTaskDelayUntil`
-   wake past its target tick — worth checking empirically with a stress
-   test of rapid presses.)*
+
 3. **Is there a priority-inversion risk introduced by combining these two
    apps?**
-   *(Your answer: no shared mutex exists between the beacon and the
-   bottom-half tasks, so classic priority inversion doesn't apply here;
-   the only shared resource is Core 1's CPU time itself, arbitrated by
-   the scheduler's priority rule, not a lock.)*
+
 4. **The HTTP handler reads six separate volatile fields with no lock.
    Why is this "benign-racy" rather than a real bug, and where would that
    stop being true?**
-   *(Your answer: each individual field is a single word-aligned
-   read/write, atomic on Xtensa, so no field is ever torn; the fields can
-   be mutually inconsistent by one poll cycle — e.g., `presses` bumped
-   before `radar_hits` catches up — which is fine for a dashboard but would
-   need a mutex or snapshot struct if this data drove an actuator instead
-   of a browser.)*
+
 
 ## 8. AI disclosure
 
@@ -139,9 +127,4 @@ itself if you want to cite something specific in your reflection.)*
   diagram.
 - Capstone integration: AI (Claude) used to merge App 1 and App 3 into a
   single `main.c`, extend the `/state` JSON and web dashboard to report
-  ISR/bottom-half latency alongside beacon state, and draft this README
-  (task table structure, hazard analysis table, and the new engineering
-  analysis questions/draft answers above). All measured latency numbers,
-  the final task-table figures, and the engineering-analysis reasoning
-  should be verified/re-measured and written in your own words before
-  submission — the drafts above are starting points, not final answers.
+  ISR/bottom-half latency alongside beacon state
